@@ -1,0 +1,32 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: library
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  admin-service:
+    build: ./backend/admin-service
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+      - rabbitmq
+
+  users-service:
+    build: ./backend/users-service
+    ports:
+      - "9090:9090"
+    depends_on:
+      - postgres

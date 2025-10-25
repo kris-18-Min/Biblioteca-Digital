@@ -1,0 +1,41 @@
+\
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{graphicx}
+\title{Desarrollo de Proyecto con Arquitectura Hexagonal y RabbitMQ}
+\author{Equipo — Biblioteca Digital}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section*{Resumen}
+Este documento describe el proyecto: sistema de gestión de biblioteca digital usando arquitectura hexagonal, Node.js, React + Vite y RabbitMQ.
+
+\section{Objetivos}
+\begin{itemize}
+\item Aplicar la arquitectura hexagonal separando dominio, puertos y adaptadores.
+\item Implementar mensajería con RabbitMQ entre microservicios.
+\item Desarrollar un frontend moderno con React + Vite.
+\item Documentar todo en Overleaf con evidencia técnica.
+\end{itemize}
+
+\section{Arquitectura}
+Se presentan dos microservicios principales: \texttt{users-service} (gestión de usuarios y libros) y \texttt{admin-service} (auditoría). RabbitMQ actúa como bus de eventos.
+
+\section{Evidencia técnica}
+Incluya capturas de pantalla del frontend, logs de auditoría y fragmentos de código. Por ejemplo, endpoint de registro:
+\begin{lstlisting}[language=JavaScript]
+POST /users
+body: { name, email, password }
+\end{lstlisting}
+
+\section{Reflexión}
+Describir decisiones de diseño, retos y oportunidades de mejora (por ejemplo: testing, despliegue continuo, escalado).
+
+\section{Conclusión}
+Resumen y aprendizajes.
+
+\end{document}
