@@ -15,9 +15,29 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-const databaseUrl = process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/library';
-const pool = createPool(databaseUrl);
+const databaseUrl = process.env.DATABASE_URL || 'postgres://postgres:postgres@postgres:5432/library';
 
+// Función para intentar conectar a PostgreSQL
+const connectWithRetry = async () => {
+  const maxRetries = 10;
+  let retries = 0;
+  
+  while (retries < maxRetries) {
+    try {
+      const pool = createPool(databaseUrl);
+      await pool.query('SELECT 1');
+      console.log('✅ Conectado a PostgreSQL');
+      return pool;
+    } catch (err) {
+      retries++;
+      console.log(`⏳ Intentando conectar a PostgreSQL... intento ${retries}/${maxRetries}`);
+      await new Promise(resolve => setTimeout(resolve, 5000));
+    }
+  }
+  throw new Error('No se pudo conectar a PostgreSQL después de varios intentos');
+};
+
+const pool = await connectWithRetry();
 const userRepo = new PostgresUserRepository(pool);
 await userRepo.init();
 const bookRepo = new PostgresBookRepository(pool);
@@ -31,8 +51,8 @@ if (parseInt(existing.rows[0].count,10) === 0) {
   console.log('Seeded sample books');
 }
 
-const publisher = new RabbitPublisher(process.env.RABBITMQ_URL || 'amqp://localhost');
-const service = new UserService(userRepo, publisher);
+const publisher = new RabbitPublisher(process.env.RABBITMQ_URL || 'amqp://rabbitmq');
+const service = new UserService(userRepo, publisher, bookRepo);
 const jwtSecret = process.env.JWT_SECRET || 'please_change_me';
 
 // Register

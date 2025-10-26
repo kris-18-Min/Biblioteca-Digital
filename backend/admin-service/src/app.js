@@ -5,8 +5,29 @@ import fs from 'fs';
 dotenv.config();
 const app = express();
 
-const consumer = new AuditConsumer(process.env.RABBITMQ_URL || 'amqp://localhost');
-consumer.start().catch(err => console.error('Consumer start error', err));
+const rabbitUrl = process.env.RABBITMQ_URL || 'amqp://rabbitmq';
+
+// Función para intentar conectar a RabbitMQ
+const connectWithRetry = async () => {
+  const maxRetries = 10;
+  let retries = 0;
+  
+  while (retries < maxRetries) {
+    try {
+      const consumer = new AuditConsumer(rabbitUrl);
+      await consumer.start();
+      console.log('✅ Conectado a RabbitMQ');
+      return consumer;
+    } catch (err) {
+      retries++;
+      console.log(`⏳ Intentando conectar a RabbitMQ... intento ${retries}/${maxRetries}`);
+      await new Promise(resolve => setTimeout(resolve, 5000));
+    }
+  }
+  throw new Error('No se pudo conectar a RabbitMQ después de varios intentos');
+};
+
+await connectWithRetry();
 
 app.get('/health', (req,res) => res.json({ ok: true }));
 

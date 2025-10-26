@@ -1,4 +1,7 @@
-FROM node:18
+FROM node:18-alpine
+
+# Instalar dependencias necesarias
+RUN apk add --no-cache bash bind-tools netcat-openbsd
 
 WORKDIR /app
 
@@ -6,12 +9,8 @@ COPY package*.json ./
 RUN npm install
 
 COPY . .
+COPY wait-for-it.sh .
+RUN chmod +x wait-for-it.sh
 
-# Copiar el script
-COPY entrypoint.sh /entrypoint.sh
-
-# Dar permisos correctos (forma más simple)
-RUN chmod +x /entrypoint.sh
-
-# Ejecutar script como CMD
-CMD ["/entrypoint.sh"]
+# Esperar a PostgreSQL y RabbitMQ antes de iniciar
+CMD ["sh", "-c", "./wait-for-it.sh postgres:5432 -- ./wait-for-it.sh rabbitmq:5672 -- npm start"]

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import jwtDecode from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 
 export default function Login({ onLogin }){
   const [form, setForm] = useState({ email:'', password:'' });
@@ -9,7 +9,7 @@ export default function Login({ onLogin }){
   const submit = async e => {
     e.preventDefault();
     try {
-      const res = await axios.post('http://localhost:3001/login', form);
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/login`, form);
       onLogin(res.data.token);
       setMsg('Inicio exitoso');
     } catch (err) {

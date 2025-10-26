@@ -2,9 +2,10 @@ import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 
 export class UserService {
-  constructor(userRepo, publisher) {
+  constructor(userRepo, publisher, bookRepo) {
     this.userRepo = userRepo;
     this.publisher = publisher;
+    this.bookRepo = bookRepo;
   }
 
   async register({ name, email, password }) {

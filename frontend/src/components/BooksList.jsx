@@ -9,7 +9,7 @@ export default function BooksList({ token }){
   useEffect(()=>{
     (async ()=>{
       try{
-        const res = await axios.get('http://localhost:3001/books');
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/books`);
         setBooks(res.data);
       }catch(e){ setBooks([]); }
     })();
@@ -20,9 +20,9 @@ export default function BooksList({ token }){
   const create = async e => {
     e.preventDefault();
     try{
-      await axios.post('http://localhost:3001/books', form, { headers: { Authorization: 'Bearer ' + token } });
+      await axios.post(`${import.meta.env.VITE_API_URL}/books`, form, { headers: { Authorization: 'Bearer ' + token } });
       setMsg('Libro creado');
-      const res = await axios.get('http://localhost:3001/books');
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/books`);
       setBooks(res.data);
       setForm({ title:'', author:'', isbn:'', description:'' });
     }catch(err){ setMsg('Error: ' + (err.response?.data?.error || err.message)); }
@@ -30,7 +30,7 @@ export default function BooksList({ token }){
 
   const remove = async (id) => {
     try{
-      await axios.delete('http://localhost:3001/books/' + id, { headers: { Authorization: 'Bearer ' + token } });
+      await axios.delete(`${import.meta.env.VITE_API_URL}/books/${id}`, { headers: { Authorization: 'Bearer ' + token } });
       setBooks(books.filter(b=>b.id!==id));
     }catch(e){}
   };

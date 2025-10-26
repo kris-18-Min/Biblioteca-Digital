@@ -8,13 +8,13 @@ export default function Dashboard({ token }){
   useEffect(()=>{
     (async ()=>{
       try{
-        const res = await axios.get('http://localhost:3001/me', { headers: { Authorization: 'Bearer ' + token } });
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/me`, { headers: { Authorization: 'Bearer ' + token } });
         setMe(res.data);
       }catch(e){
         setMe(null);
       }
       try{
-        const a = await axios.get('http://localhost:3002/audit/recent');
+        const a = await axios.get(`${import.meta.env.VITE_ADMIN_URL}/audit/recent`);
         setAudit(a.data.entries || []);
       }catch(e){
         setAudit([]);

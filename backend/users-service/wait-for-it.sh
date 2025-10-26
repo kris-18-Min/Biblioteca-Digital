@@ -1,26 +1,37 @@
-#!/usr/bin/env bash
-# wait-for-it.sh — Espera a que un host:puerto esté disponible
+#!/bin/sh
 
-host="$1"
+if [ "$#" -lt 1 ]; then
+    echo "Uso: $0 host:port [-- command args]"
+    exit 1
+fi
+
+ARGUMENT=$1
 shift
-port="$1"
-shift
+HOST=$(echo $ARGUMENT | cut -d: -f1)
+PORT=$(echo $ARGUMENT | cut -d: -f2)
+TIMEOUT=60
 
-timeout=30
-cmd="$@"
+echo "⏳ Esperando a que $HOST:$PORT esté disponible..."
 
-echo "⏳ Esperando a que $host:$port esté disponible..."
-
-for i in $(seq $timeout); do
-  nc -z "$host" "$port" > /dev/null 2>&1
-  result=$?
-  if [ $result -eq 0 ]; then
-    echo "✅ $host:$port está disponible — ejecutando comando..."
-    exec $cmd
-  fi
-  echo "⏱️ Esperando... ($i/$timeout)"
-  sleep 1
+count=1
+while ! nc -z $HOST $PORT 2>/dev/null
+do
+    if [ $count -gt $TIMEOUT ]; then
+        echo "❌ Timeout alcanzado esperando por $HOST:$PORT"
+        exit 1
+    fi
+    echo "⌛ Aún esperando... ($count/$TIMEOUT)"
+    sleep 1
+    count=$((count + 1))
 done
 
-echo "❌ Timeout: $host:$port no respondió en $timeout segundos"
-exit 1
+echo "✅ $HOST:$PORT está disponible"
+
+if [ "$1" = "--" ]; then
+    shift
+fi
+
+if [ $# -gt 0 ]; then
+    echo "🚀 Ejecutando: $@"
+    exec "$@"
+fi

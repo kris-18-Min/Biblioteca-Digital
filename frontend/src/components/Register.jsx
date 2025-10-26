@@ -11,7 +11,7 @@ export default function Register(){
     e.preventDefault();
     if (form.password.length < 6) { setMsg('La contraseña debe tener al menos 6 caracteres'); return; }
     try {
-      const res = await axios.post('http://localhost:3001/users', form);
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/users`, form);
       setMsg('Usuario creado: ' + res.data.id);
     } catch (err) {
       setMsg('Error: ' + (err.response?.data?.error || err.message));
