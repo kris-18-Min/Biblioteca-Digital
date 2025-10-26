@@ -5,12 +5,21 @@ RUN apk add --no-cache bash bind-tools netcat-openbsd
 
 WORKDIR /app
 
+# Copiar archivos de dependencias
 COPY package*.json ./
 RUN npm install
 
+# Copiar el resto de archivos
 COPY . .
 COPY wait-for-it.sh .
 RUN chmod +x wait-for-it.sh
 
-# Esperar a PostgreSQL y RabbitMQ antes de iniciar
-CMD ["sh", "-c", "./wait-for-it.sh postgres:5432 -- ./wait-for-it.sh rabbitmq:5672 -- npm start"]
+# Crear directorio de logs
+RUN mkdir -p /app/logs
+
+# Script para iniciar el servicio
+RUN chmod +x ./entrypoint.sh
+ENTRYPOINT ["./entrypoint.sh"]
+
+# Esperar a RabbitMQ antes de iniciar
+CMD ["./entrypoint.sh"]

@@ -1,31 +1,111 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { Link } from 'react-router-dom';
 
-export default function Register(){
-  const [form, setForm] = useState({ name: '', email: '', password: '' });
+export default function Register({ onRegisterSuccess }){
+  const [form, setForm] = useState({ 
+    name: '', 
+    email: '', 
+    password: '', 
+    confirmPassword: '' 
+  });
   const [msg, setMsg] = useState('');
 
   const onChange = e => setForm({ ...form, [e.target.name]: e.target.value });
 
+  const validateForm = () => {
+    if (form.password.length < 6) {
+      setMsg('La contraseña debe tener al menos 6 caracteres');
+      return false;
+    }
+    if (form.password !== form.confirmPassword) {
+      setMsg('Las contraseñas no coinciden');
+      return false;
+    }
+    return true;
+  };
+
   const submit = async (e) => {
     e.preventDefault();
-    if (form.password.length < 6) { setMsg('La contraseña debe tener al menos 6 caracteres'); return; }
+    if (!validateForm()) return;
+    
     try {
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/users`, form);
-      setMsg('Usuario creado: ' + res.data.id);
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/users`, {
+        name: form.name,
+        email: form.email,
+        password: form.password
+      });
+      setMsg('¡Registro exitoso! Por favor revisa tu email para verificar tu cuenta.');
+      setTimeout(() => {
+        onRegisterSuccess();
+      }, 3000);
     } catch (err) {
       setMsg('Error: ' + (err.response?.data?.error || err.message));
     }
   };
 
   return (
-    <form onSubmit={submit} style={{ maxWidth: 420 }}>
-      <h2>Registro</h2>
-      <div><label>Nombre</label><input className="input" name="name" value={form.name} onChange={onChange} /></div>
-      <div><label>Email</label><input className="input" name="email" value={form.email} onChange={onChange} /></div>
-      <div><label>Password</label><input type="password" className="input" name="password" value={form.password} onChange={onChange} /></div>
-      <button className="button" type="submit" style={{marginTop:10}}>Registrar</button>
-      <p className="small">{msg}</p>
-    </form>
+    <div className="form-container card">
+      <img src="/book-logo.svg" alt="Logo" className="logo" style={{display:'block',margin:'0 auto 20px'}} />
+      <h2 style={{textAlign:'center',marginBottom:24}}>Crear cuenta nueva</h2>
+      <form onSubmit={submit}>
+        <div className="form-group">
+          <label>Nombre completo</label>
+          <input 
+            className="input" 
+            name="name" 
+            value={form.name} 
+            onChange={onChange}
+            required
+            placeholder="Tu nombre completo"
+          />
+        </div>
+        <div className="form-group">
+          <label>Email</label>
+          <input 
+            className="input" 
+            name="email" 
+            type="email"
+            value={form.email} 
+            onChange={onChange}
+            required
+            placeholder="correo@ejemplo.com"
+          />
+        </div>
+        <div className="form-group">
+          <label>Contraseña</label>
+          <input 
+            type="password" 
+            className="input" 
+            name="password" 
+            value={form.password} 
+            onChange={onChange}
+            required
+            placeholder="Mínimo 6 caracteres"
+          />
+        </div>
+        <div className="form-group">
+          <label>Confirmar contraseña</label>
+          <input 
+            type="password" 
+            className="input" 
+            name="confirmPassword" 
+            value={form.confirmPassword} 
+            onChange={onChange}
+            required
+            placeholder="Repite tu contraseña"
+          />
+        </div>
+        <button className="button" type="submit" style={{width:'100%',marginTop:20}}>
+          Crear cuenta
+        </button>
+        
+        {msg && <p className={msg.includes('Error') ? 'error' : 'success'}>{msg}</p>}
+        
+        <p style={{textAlign:'center',marginTop:20}}>
+          ¿Ya tienes una cuenta? <Link to="/login">Inicia sesión aquí</Link>
+        </p>
+      </form>
+    </div>
   );
 }

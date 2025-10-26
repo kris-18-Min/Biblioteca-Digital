@@ -5,6 +5,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: library
+      POSTGRES_HOST_AUTH_METHOD: trust
     volumes:
       - ./postgres_data:/var/lib/postgresql/data
     ports:
@@ -15,6 +16,8 @@ services:
       timeout: 10s
       retries: 10
       start_period: 30s
+    networks:
+      - biblioteca-net
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -27,43 +30,63 @@ services:
       timeout: 10s
       retries: 10
       start_period: 30s
+    networks:
+      - biblioteca-net
 
   admin-service:
     build: ./backend/admin-service
     ports:
       - "3002:3002"
     environment:
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_USER=postgres
-      - DB_PASSWORD=postgres
-      - DB_NAME=library
+      - NODE_ENV=production
+      - PORT=3002
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+    volumes:
+      - admin_logs:/app/logs
     depends_on:
-      postgres:
-        condition: service_healthy
       rabbitmq:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - biblioteca-net
 
   users-service:
     build: ./backend/users-service
     ports:
       - "3001:3001"
     environment:
-      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/library
+      - NODE_ENV=production
+      - PORT=3001
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=library
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
-      - JWT_SECRET=please_change_me
+      - JWT_SECRET=biblioteca_digital_secret_key_2025
     depends_on:
       postgres:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - biblioteca-net
 
   frontend:
     build: ./frontend
     ports:
       - "3000:80"
     environment:
+      - NODE_ENV=production
       - VITE_API_URL=http://localhost:3001
       - VITE_ADMIN_URL=http://localhost:3002
     volumes:
@@ -71,3 +94,17 @@ services:
     depends_on:
       - users-service
       - admin-service
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - biblioteca-net
+
+volumes:
+  admin_logs:
+
+networks:
+  biblioteca-net:
+    driver: bridge

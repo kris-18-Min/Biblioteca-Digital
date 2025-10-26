@@ -19,18 +19,28 @@ const databaseUrl = process.env.DATABASE_URL || 'postgres://postgres:postgres@po
 
 // Función para intentar conectar a PostgreSQL
 const connectWithRetry = async () => {
-  const maxRetries = 10;
+  const maxRetries = 20; // Aumentamos el número de intentos
   let retries = 0;
   
   while (retries < maxRetries) {
     try {
+      console.log('⏳ Intentando conectar a PostgreSQL...');
       const pool = createPool(databaseUrl);
       await pool.query('SELECT 1');
-      console.log('✅ Conectado a PostgreSQL');
+      console.log('✅ Conectado exitosamente a PostgreSQL');
+      
+      // Verificar tablas necesarias
+      const tables = await pool.query(`
+        SELECT table_name 
+        FROM information_schema.tables 
+        WHERE table_schema = 'public'
+      `);
+      console.log('📋 Tablas existentes:', tables.rows.map(r => r.table_name).join(', '));
+      
       return pool;
     } catch (err) {
       retries++;
-      console.log(`⏳ Intentando conectar a PostgreSQL... intento ${retries}/${maxRetries}`);
+      console.log(`❌ Intento ${retries}/${maxRetries} fallido:`, err.message);
       await new Promise(resolve => setTimeout(resolve, 5000));
     }
   }
@@ -73,8 +83,14 @@ app.post('/login', async (req, res) => {
     const { email, password } = req.body;
     const user = await service.verifyCredentials(email, password);
     if (!user) return res.status(401).json({ error: 'invalid credentials' });
-    const token = jwt.sign({ sub: user.id, email: user.email }, jwtSecret, { expiresIn: '8h' });
-    res.json({ token });
+    const token = jwt.sign({ 
+      sub: user.id, 
+      email: user.email,
+      name: user.name 
+    }, jwtSecret, { 
+      expiresIn: '8h' 
+    });
+    res.json({ token, user: { id: user.id, name: user.name, email: user.email } });
   } catch (err) {
     console.error(err);
     res.status(400).json({ error: err.message });

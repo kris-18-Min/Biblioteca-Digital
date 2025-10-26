@@ -1,0 +1,22 @@
+#!/bin/sh
+
+# Esperar a que PostgreSQL esté disponible
+echo "Esperando a PostgreSQL..."
+./wait-for-it.sh postgres:5432 -t 60
+
+if [ $? -ne 0 ]; then
+  echo "Error: PostgreSQL no está disponible después de 60 segundos"
+  exit 1
+fi
+
+# Esperar a que RabbitMQ esté disponible
+echo "Esperando a RabbitMQ..."
+./wait-for-it.sh rabbitmq:5672 -t 60
+
+if [ $? -ne 0 ]; then
+  echo "Error: RabbitMQ no está disponible después de 60 segundos"
+  exit 1
+fi
+
+echo "Servicios de base de datos listos. Iniciando aplicación..."
+npm start
